@@ -57,31 +57,53 @@ public class NatureRecognition {
 	 * @param offe
 	 * @return
 	 */
+	public static List<Term> recognition(List<String> words) {
+		return recognition(words, 0);
+	}
+
+	/**
+	 * 传入一组。词对词语进行。词性标注
+	 * 
+	 * @param words
+	 * @param offe
+	 * @return
+	 */
 	public static List<Term> recognition(List<String> words, int offe) {
 		List<Term> terms = new ArrayList<Term>(words.size());
 		int tempOffe = 0;
-		String[] params = null;
 		for (String word : words) {
-			// 获得词性 ， 先从系统辞典。在从用户自定义辞典
-			AnsjItem ansjItem = DATDictionary.getItem(word);
-			TermNatures tn = null;
-			if (ansjItem.termNatures != TermNatures.NULL) {
-				tn = ansjItem.termNatures;
-			} else if ((params = UserDefineLibrary.getParams(word)) != null) {
-				tn = new TermNatures(new TermNature(params[0], 1));
-			}else if(WordAlert.isEnglish(word)){
-				tn = TermNatures.EN ;
-			}else if(WordAlert.isNumber(word)){
-				tn = TermNatures.M ;
-			}else{
-				tn = TermNatures.NULL ;
-			}
-			
+			TermNatures tn = getTermNatures(word);
+
 			terms.add(new Term(word, offe + tempOffe, tn));
 			tempOffe += word.length();
 		}
 		new NatureRecognition(terms).recognition();
 		return terms;
+	}
+
+	/**
+	 * 传入一次词语获得相关的词性
+	 * @param word
+	 * @return
+	 */
+	public static TermNatures getTermNatures(String word) {
+		String[] params = null;
+		// 获得词性 ， 先从系统辞典。在从用户自定义辞典
+		AnsjItem ansjItem = DATDictionary.getItem(word);
+		TermNatures tn = null;
+
+		if (ansjItem != AnsjItem.NULL) {
+			tn = ansjItem.termNatures;
+		} else if ((params = UserDefineLibrary.getParams(word)) != null) {
+			tn = new TermNatures(new TermNature(params[0], 1));
+		} else if (WordAlert.isEnglish(word)) {
+			tn = TermNatures.EN;
+		} else if (WordAlert.isNumber(word)) {
+			tn = TermNatures.M;
+		} else {
+			tn = TermNatures.NULL;
+		}
+		return tn;
 	}
 
 	public void walk() {
@@ -145,7 +167,6 @@ public class NatureRecognition {
 		}
 
 		public void setScore(NatureTerm natureTerm) {
-			// TODO Auto-generated method stub
 			double tempScore = MathUtil.compuNatureFreq(natureTerm, this);
 			if (from == null || score < tempScore) {
 				this.score = tempScore;
